@@ -1,6 +1,7 @@
 const User           = require('../models/User');
 const generateTokens = require('../middleware/generateTokens');
 const jwt            = require('jsonwebtoken');
+const crypto         = require('crypto');
 
 // ─── Register ─────────────────────────────────────────────────
 const register = async (req, res) => {
@@ -29,13 +30,17 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
-    if (!email || !password)
+    if (!normalizedEmail || !password)
       return res.status(400).json({ message: 'Email and password are required' });
 
-    const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password)))
-      return res.status(401).json({ message: 'Invalid email or password' });
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user)
+      return res.status(404).json({ message: 'Account does not exist' });
+
+    if (!(await user.matchPassword(password)))
+      return res.status(401).json({ message: 'Incorrect password' });
 
     const { accessToken, refreshToken } = generateTokens(user._id);
     await User.updateOne({ _id: user._id }, { $push: { refreshTokens: refreshToken } });
@@ -43,6 +48,41 @@ const login = async (req, res) => {
     res.json({ user, accessToken, refreshToken });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// ─── Google Auth ──────────────────────────────────────────────
+const googleAuth = async (req, res) => {
+  try {
+    const { email, name, googleId, avatar } = req.body;
+
+    if (!email || !name || !googleId) {
+      return res.status(400).json({ message: 'Missing Google profile details' });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar: avatar || null,
+        password: crypto.randomBytes(24).toString('hex'),
+      });
+    } else {
+      user.name = user.name || name;
+      user.googleId = googleId;
+      if (avatar && !user.avatar) user.avatar = avatar;
+      await user.save();
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    await User.updateOne({ _id: user._id }, { $push: { refreshTokens: refreshToken } });
+
+    res.json({ user, accessToken, refreshToken });
+  } catch (err) {
+    res.status(500).json({ message: 'Google login failed', error: err.message });
   }
 };
 
@@ -86,4 +126,4 @@ const refreshToken = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, refreshToken };
+module.exports = { register, login, googleAuth, logout, refreshToken };

@@ -26,10 +26,28 @@ connectDB();
 
 const app    = express();
 const server = http.createServer(app);
+const allowedOrigins = new Set([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://loopkarts.in',
+  'https://www.loopkarts.in',
+  'https://loopkart-be.onrender.com'
+]);
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow browserless tools like curl/postman and both local Vite host variants.
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
 
 // ─── Socket.IO Setup ──────────────────────────────────────────
 const io = new Server(server, {
-  cors: { origin: 'http://localhost:5173', credentials: true },
+  cors: corsOptions,
 });
 
 // Online users map: userId -> socketId
@@ -136,7 +154,7 @@ io.on('connection', (socket) => {
 });
 
 // ─── Express Middleware ───────────────────────────────────────
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 

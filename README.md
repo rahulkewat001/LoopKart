@@ -53,6 +53,16 @@ LoopKart is a modern e-commerce platform that allows users to buy products, sell
 
 ## ✨ Features
 
+### 🛒 Modern Checkout System (NEW!)
+- **Two-step checkout flow** - Address → Payment
+- **Multiple payment methods** - UPI, Card, Net Banking, COD
+- **Razorpay integration** - Secure payment processing
+- **Real-time validation** - Phone, pincode, required fields
+- **Order summary** - Live cart totals and item details
+- **Success animations** - Celebration screen after order
+- **Mobile responsive** - Works on all devices
+- **Production ready** - Complete with documentation
+
 ### User Features
 - 🔐 Authentication (Register, Login, Forgot Password with OTP)
 - 🛒 Shopping cart with quantity management
@@ -300,7 +310,7 @@ npm run dev
 ### Payment Routes (`/api/payment`)
 - `POST /create-order` - Create Razorpay order
 - `POST /verify` - Verify payment signature
-
+x
 ### Chat Routes (`/api/chats`)
 - `GET /` - Get user chats
 - `POST /` - Create/get chat with user
