@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -28,6 +28,13 @@ export default function CartPage() {
 
   const finalTotal = Math.max(0, total - discount);
 
+  // Reset to cart step if items become empty
+  useEffect(() => {
+    if (items.length === 0 && step !== 'cart') {
+      setStep('cart');
+    }
+  }, [items.length, step]);
+
   const applyCoupon = async () => {
     if (!coupon.trim()) return;
     try {
@@ -44,6 +51,15 @@ export default function CartPage() {
   };
 
   const removeCoupon = () => { setDiscount(0); setAppliedCode(''); setCouponMsg(''); setCoupon(''); };
+
+  // Prevent proceeding if cart is empty
+  const handleProceedToCheckout = () => {
+    if (items.length === 0) {
+      toast('Your cart is empty', 'warning');
+      return;
+    }
+    setStep('address');
+  };
 
   const validateAddress = () => {
     const { fullName, phone, street, city, state, pincode } = address;
@@ -248,7 +264,7 @@ export default function CartPage() {
                 {couponMsg && !appliedCode && <p className="cart-coupon__msg">{couponMsg}</p>}
                 <p className="cart-coupon__hint">Try: LOOP40 · SAVE100 · FIRST50</p>
               </div>
-              <Button fullWidth size="lg" onClick={() => setStep('address')}>Proceed to Checkout →</Button>
+              <Button fullWidth size="lg" onClick={handleProceedToCheckout}>Proceed to Checkout →</Button>
             </div>
           </div>
 
