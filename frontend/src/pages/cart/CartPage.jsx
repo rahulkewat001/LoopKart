@@ -75,17 +75,28 @@ export default function CartPage() {
   const placeCODOrder = async () => {
     setLoading(true);
     try {
+      console.log('Placing COD order with data:', {
+        items: items.map((i) => ({ product: i._id, name: i.name, emoji: i.emoji, price: i.price, quantity: i.quantity })),
+        totalAmount: finalTotal,
+        address,
+        couponCode: appliedCode || null,
+        discountAmount: discount,
+      });
+
       const { data } = await api.post('/orders', {
         items: items.map((i) => ({ product: i._id, name: i.name, emoji: i.emoji, price: i.price, quantity: i.quantity })),
         totalAmount: finalTotal, address,
         couponCode: appliedCode || null, discountAmount: discount,
       });
+
+      console.log('Order created successfully:', data);
       setOrderId(data.order._id);
       clearCart();
       setStep('success');
       toast('Order placed successfully! 🎉', 'success');
     } catch (err) {
       console.error('Order placement error:', err);
+      console.error('Error response:', err.response?.data);
       toast(err.response?.data?.message || 'Order failed. Please try again.', 'error');
     } finally { setLoading(false); }
   };
@@ -94,6 +105,7 @@ export default function CartPage() {
   const placeOnlineOrder = async () => {
     setLoading(true);
     try {
+      console.log('Creating online order...');
       // Step 1: Create order in our DB first
       const { data: orderData } = await api.post('/orders', {
         items: items.map((i) => ({ product: i._id, name: i.name, emoji: i.emoji, price: i.price, quantity: i.quantity })),
@@ -101,9 +113,11 @@ export default function CartPage() {
         couponCode: appliedCode || null, discountAmount: discount,
       });
       const dbOrderId = orderData.order._id;
+      console.log('Order created in DB:', dbOrderId);
 
       // Step 2: Create Razorpay payment order
       const { data: payData } = await api.post('/payment/create-order', { amount: finalTotal });
+      console.log('Razorpay order created:', payData.orderId);
 
       // Step 3: Open Razorpay checkout
       const options = {
@@ -118,9 +132,10 @@ export default function CartPage() {
           email:   user?.email,
           contact: address.phone,
         },
-        theme: { color: '#a855f7' },
+        theme: { color: '#d6b174' },
         handler: async (response) => {
           try {
+            console.log('Payment successful, verifying...');
             // Step 4: Verify payment
             await api.post('/payment/verify', {
               razorpay_order_id:   response.razorpay_order_id,
@@ -128,6 +143,7 @@ export default function CartPage() {
               razorpay_signature:  response.razorpay_signature,
               orderId:             dbOrderId,
             });
+            console.log('Payment verified successfully');
             setOrderId(dbOrderId);
             clearCart();
             setStep('success');
@@ -139,6 +155,7 @@ export default function CartPage() {
         },
         modal: {
           ondismiss: () => {
+            console.log('Payment modal dismissed');
             toast('Payment cancelled', 'info');
             setLoading(false);
           },
@@ -154,6 +171,7 @@ export default function CartPage() {
       rzp.open();
     } catch (err) {
       console.error('Payment initiation error:', err);
+      console.error('Error response:', err.response?.data);
       toast(err.response?.data?.message || 'Payment initiation failed', 'error');
       setLoading(false);
     }
