@@ -248,7 +248,7 @@ export default function CartPage() {
                 {couponMsg && !appliedCode && <p className="cart-coupon__msg">{couponMsg}</p>}
                 <p className="cart-coupon__hint">Try: LOOP40 · SAVE100 · FIRST50</p>
               </div>
-              <Button fullWidth size="lg" onClick={() => navigate('/checkout')}>Proceed to Checkout →</Button>
+              <Button fullWidth size="lg" onClick={() => setStep('address')}>Proceed to Checkout →</Button>
             </div>
           </div>
 
