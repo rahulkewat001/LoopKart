@@ -28,9 +28,18 @@ export default function CartPage() {
 
   const finalTotal = Math.max(0, total - discount);
 
+  // Debug logging on mount
+  useEffect(() => {
+    console.log('CartPage mounted');
+    console.log('Initial items:', items);
+    console.log('Initial step:', step);
+  }, []);
+
   // Reset to cart step if items become empty
   useEffect(() => {
+    console.log('useEffect triggered - items.length:', items.length, 'step:', step);
     if (items.length === 0 && step !== 'cart') {
+      console.log('Resetting to cart step because items are empty');
       setStep('cart');
     }
   }, [items.length, step]);
@@ -54,10 +63,18 @@ export default function CartPage() {
 
   // Prevent proceeding if cart is empty
   const handleProceedToCheckout = () => {
+    console.log('Proceed to Checkout clicked');
+    console.log('Current items:', items);
+    console.log('Items length:', items.length);
+    console.log('Current step:', step);
+    
     if (items.length === 0) {
+      console.log('Cart is empty, showing warning');
       toast('Your cart is empty', 'warning');
       return;
     }
+    
+    console.log('Setting step to address');
     setStep('address');
   };
 
@@ -177,7 +194,10 @@ export default function CartPage() {
     }
   };
 
-  const handlePay = () => paymentMethod === 'cod' ? placeCODOrder() : placeOnlineOrder();
+  const handlePay = () => {
+    console.log('handlePay called, payment method:', paymentMethod);
+    return paymentMethod === 'cod' ? placeCODOrder() : placeOnlineOrder();
+  };
 
   // ─── Success Screen ────────────────────────────────────────────
   if (step === 'success') return (
